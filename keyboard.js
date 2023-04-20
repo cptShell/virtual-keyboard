@@ -27,12 +27,16 @@ const createButton = (key) => {
     e.preventDefault();
 
     pressState.mouse = false;
-    keyButton.classList.remove('pressed');
+    if (!pressState.keyboard && !pressState.mouse) {
+      keyButton.classList.remove('pressed');
+    }
     document.removeEventListener('mouseup', handleMouseUp);
   };
   const handleKeyUp = () => {
     pressState.keyboard = false;
-    keyButton.classList.remove('pressed');
+    if (!pressState.keyboard && !pressState.mouse) {
+      keyButton.classList.remove('pressed');
+    }
     document.removeEventListener('keyup', handleMouseUp);
   };
   const handleMouseDown = (e) => {
@@ -43,7 +47,9 @@ const createButton = (key) => {
     typeChar(key, input);
     document.addEventListener('mouseup', handleMouseUp);
   };
-  const handleKeyDown = () => {
+  const handleKeyDown = (e) => {
+    if (e.key !== key) return;
+    
     keyButton.classList.add('pressed');
     pressState.keyboard = true;
     document.addEventListener('keyup', handleKeyUp);
@@ -55,5 +61,18 @@ const createButton = (key) => {
   return keyButton;
 };
 
-const button = createButton('B');
-body.append(button);
+const initKeyboard = () => {
+  const keyboard = document.createElement('div');
+  const keys = `qwertyuiop[]asdfghjkl;'zxcvbnm,./`;
+  const keyboardButtons = keys.split('').map(createButton);
+
+  const dropBlur = (event) => event.preventDefault();
+
+  keyboard.classList.add('keyboard');
+  keyboard.addEventListener('click', dropBlur);
+
+  keyboard.append(...keyboardButtons);
+  body.append(keyboard);
+}
+
+initKeyboard();
