@@ -1,5 +1,5 @@
 import './style.css';
-import { 
+import {
   createElement,
   cancelBlur,
   keyboardMapping,
@@ -12,49 +12,8 @@ import {
 const { body } = window.document;
 
 const initKeyboard = () => {
-  const createKeyButton = (code) => {
-    const codeIndex = keyboardMapping.keyCodes.indexOf(code);
-    const key = keyboardMapping.en[codeIndex];
-  
-    const typeChar = (char) => {
-      const { selectionStart, selectionEnd } = bondedInput;
-      const startText = bondedInput.value.substring(0, selectionStart);
-      const endText = bondedInput.value.substring(selectionEnd, bondedInput.value.length);
-  
-      bondedInput.value = startText + char + endText;
-      bondedInput.selectionEnd = selectionStart + char.length;
-      bondedInput.selectionStart = selectionStart + char.length;
-    };
-    const handleMouseUp = (event) => {
-      cancelBlur(event);
-      updateKeyboardStyles(false, code, Devices.MOUSE);
-      document.removeEventListener(EventNames.MOUSEUP, handleMouseUp);
-    };
-    const handleMouseDown = (event) => {
-      if (!bondedInput || document.activeElement !== bondedInput) return;
-
-      cancelBlur(event);
-      updateKeyboardStyles(true, code, Devices.MOUSE);
-      typeChar(key, bondedInput);
-      document.addEventListener(EventNames.MOUSEUP, handleMouseUp);
-    };
-
-    const keyButton = createElement(TagNames.BUTTON, null, null, key);
-    keyButton.addEventListener(EventNames.MOUSEDOWN, handleMouseDown);
-
-    return keyButton;
-  };
-
-  const buttonMap = keyboardMapping.keyCodes.reduce((map, code) => {
-    const button = createKeyButton(code);
-    const pressState = { mouse: false, keyboard: false };
-    return map.set(code, { button, pressState });
-  }, new Map());
-
-  const bondedInput = document.querySelector('textarea');
-  const keyboard = createElement(TagNames.DIV);
-  keyboard.classList.add(Devices.KEYBOARD);
-  keyboard.addEventListener(EventNames.MOUSEDOWN, cancelBlur);
+  const boundedInput = document.querySelector('textarea');
+  const buttonMap = new Map();
 
   const updateKeyboardStyles = (force, code, stateName) => {
     const { pressState, button } = buttonMap.get(code);
@@ -64,19 +23,62 @@ const initKeyboard = () => {
     if (force ? !condition : condition) {
       button.classList.toggle(ClassNames.PRESSED, force);
     }
-  }
+  };
 
-  const handleKeyUp = ({which: code}) => {
+  const createKeyButton = (code) => {
+    const codeIndex = keyboardMapping.keyCodes.indexOf(code);
+    const key = keyboardMapping.en[codeIndex];
+
+    const typeChar = (char) => {
+      const { selectionStart, selectionEnd } = boundedInput;
+      const startText = boundedInput.value.substring(0, selectionStart);
+      const endText = boundedInput.value.substring(selectionEnd, boundedInput.value.length);
+
+      boundedInput.value = startText + char + endText;
+      boundedInput.selectionEnd = selectionStart + char.length;
+      boundedInput.selectionStart = selectionStart + char.length;
+    };
+    const handleMouseUp = (event) => {
+      cancelBlur(event);
+      updateKeyboardStyles(false, code, Devices.MOUSE);
+      document.removeEventListener(EventNames.MOUSEUP, handleMouseUp);
+    };
+    const handleMouseDown = (event) => {
+      if (!boundedInput || document.activeElement !== boundedInput) return;
+
+      cancelBlur(event);
+      updateKeyboardStyles(true, code, Devices.MOUSE);
+      typeChar(key, boundedInput);
+      document.addEventListener(EventNames.MOUSEUP, handleMouseUp);
+    };
+
+    const keyButton = createElement(TagNames.BUTTON, null, null, key);
+    keyButton.addEventListener(EventNames.MOUSEDOWN, handleMouseDown);
+
+    return keyButton;
+  };
+
+  keyboardMapping.keyCodes.reduce((map, code) => {
+    const button = createKeyButton(code);
+    const pressState = { mouse: false, keyboard: false };
+    return map.set(code, { button, pressState });
+  }, buttonMap);
+
+  const keyboard = createElement(TagNames.DIV, Devices.KEYBOARD);
+  keyboard.addEventListener(EventNames.MOUSEDOWN, cancelBlur);
+
+  const handleKeyUp = ({ which: code }) => {
     updateKeyboardStyles(false, code, Devices.KEYBOARD);
   };
   const handleKeyDown = (event) => {
-    if (!bondedInput || document.activeElement !== bondedInput) return;
+    if (!boundedInput || document.activeElement !== boundedInput) return;
 
     const { which: code, shiftKey, altKey } = event;
+    const isChangeLanguage = altKey && shiftKey;
+
     updateKeyboardStyles(true, code, Devices.KEYBOARD);
 
-    const isChangeLanguage = altKey && shiftKey;
-    console.log(isChangeLanguage);
+    if (isChangeLanguage) console.log('language is changed!');
   };
 
   document.addEventListener(EventNames.KEYDOWN, handleKeyDown);
@@ -85,6 +87,6 @@ const initKeyboard = () => {
   const buttons = [...buttonMap.values()].map(({ button }) => button);
   keyboard.append(...buttons);
   body.append(keyboard);
-}
+};
 
 initKeyboard();

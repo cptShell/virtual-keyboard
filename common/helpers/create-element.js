@@ -1,4 +1,4 @@
-export const createElement = (tag, className, attributes, innerText) => {
+export default (tag, className, attributes, innerText) => {
   const element = document.createElement(tag);
   if (className) element.classList.add(className);
   if (attributes) {
