@@ -18,7 +18,6 @@ langList.getNext = (currentLang) => {
   const nextIndex = (currentIndex + 1) % langList.length;
   return langList[nextIndex] || currentLang;
 };
-const controlKeyCodes = [KeyCodes.SHIFT, KeyCodes.ALT];
 
 const initKeyboard = () => {
   let lang = localStorage.getItem('user-key-lang') || Languages.EN;
@@ -83,13 +82,15 @@ const initKeyboard = () => {
     return keyButton;
   };
   const updateKeys = (forceChangeLanguage) => {
+    isUpperCased = !isUpperCased;
     if (forceChangeLanguage) lang = langList.getNext(lang);
 
-    [...buttonMap.entries()].for(([code, { button }]) => {
+    [...buttonMap.entries()].forEach(([code, { button }]) => {
+      const updatedButton = button;
       const codeIndex = keyboardMapping.keyCodes.indexOf(code);
       const chars = keyboardMapping[lang + (isUpperCased ? 'Shift' : '')];
       const newChar = chars[codeIndex];
-      button.textContent = newChar;
+      updatedButton.textContent = newChar;
     });
   };
   const createCapsButton = (code) => {
@@ -97,7 +98,6 @@ const initKeyboard = () => {
     const key = keyboardMapping[lang][codeIndex];
     const capsButton = createElement(TagNames.BUTTON, null, null, key);
     const handlePushCapsLock = () => {
-      isUpperCased = !isUpperCased;
       isCapsed = !isCapsed;
       updateKeys(false);
       setKeyboardStyles(isCapsed, code);
@@ -122,53 +122,37 @@ const initKeyboard = () => {
   const keyboard = createElement(TagNames.DIV, Devices.KEYBOARD);
   keyboard.addEventListener(EventNames.MOUSEDOWN, cancelBlur);
 
-  const handleKeyUp = ({ which: code }) => {
-    if (!buttonMap.has(code)) return;
-    if (code !== KeyCodes.CAPS_LOCK) {
-      toggleKeyboardStyles(false, code, Devices.KEYBOARD);
-    }
-  };
-  const handleKeyDown = ({ which: code }) => {
+  const createHandleKey = (force) => ({ which: code }) => {
     if (!boundedInput || document.activeElement !== boundedInput) return;
     if (!buttonMap.has(code)) return;
     if (code !== KeyCodes.CAPS_LOCK) {
-      toggleKeyboardStyles(true, code, Devices.KEYBOARD);
+      toggleKeyboardStyles(force, code, Devices.KEYBOARD);
     }
   };
-  // TODO: fix bug with changing textcase while
-  // you randomly type as faster as you can on (cttr + alt + caps)
+  const handleKeyUp = createHandleKey(false);
+  const handleKeyDown = createHandleKey(true);
   const handleUnshift = ({ which: code }) => {
-    const isControlKey = controlKeyCodes.some((key) => key === code);
-    if (!isControlKey) return;
-    if (code === KeyCodes.SHIFT) {
-      isUpperCased = !isUpperCased;
-      updateKeys(false);
-    }
+    if (code === KeyCodes.SHIFT) updateKeys(false);
   };
   const handleShift = ({
     altKey, shiftKey, which: code, repeat,
   }) => {
     if (repeat) return;
-    if (code === KeyCodes.SHIFT) {
-      isUpperCased = !isUpperCased;
-      updateKeys(altKey && shiftKey);
-    }
+    if (code === KeyCodes.SHIFT) updateKeys(altKey && shiftKey);
   };
   const handleCapsLock = ({ which: code, repeat }) => {
     if (repeat) return;
     if (code === KeyCodes.CAPS_LOCK) {
-      isUpperCased = !isUpperCased;
       isCapsed = !isCapsed;
-
       updateKeys(false);
       setKeyboardStyles(isCapsed, code);
     }
   };
   document.addEventListener(EventNames.KEYDOWN, handleKeyDown);
   document.addEventListener(EventNames.KEYDOWN, handleShift);
+  document.addEventListener(EventNames.KEYDOWN, handleCapsLock);
   document.addEventListener(EventNames.KEYUP, handleKeyUp);
   document.addEventListener(EventNames.KEYUP, handleUnshift);
-  document.addEventListener(EventNames.KEYDOWN, handleCapsLock);
 
   const buttons = [...buttonMap.values()].map(({ button }) => button);
   keyboard.append(...buttons);
