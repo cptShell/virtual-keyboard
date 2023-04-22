@@ -7,13 +7,15 @@ export const ClassNames = {
 export const Languages = {
   EN: 'en',
   RU: 'ru',
-}
+};
 
 export const EventNames = {
   MOUSEUP: 'mouseup',
   MOUSEDOWN: 'mousedown',
   KEYUP: 'keyup',
   KEYDOWN: 'keydown',
+  CLICK: 'click',
+  KEYPRESS: 'keypress',
 };
 
 export const TagNames = {
@@ -36,4 +38,4 @@ export const KeyCodes = {
   CTRL: 17,
   WIN: 91,
   ALT: 18,
-}
+};
