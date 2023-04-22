@@ -21,3 +21,14 @@ export const Devices = {
   KEYBOARD: 'keyboard',
   TEXTAREA: 'textarea',
 };
+
+export const KeyCodes = {
+  SPACE: 32,
+  SHIFT: 16,
+  CAPS_LOCK: 20,
+  TAB: 9,
+  ENTER: 13,
+  CTRL: 17,
+  WIN: 91,
+  ALT: 18,
+}

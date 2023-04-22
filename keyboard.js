@@ -7,6 +7,7 @@ import {
   EventNames,
   TagNames,
   Devices,
+  KeyCodes
 } from './common/common';
 
 const { body } = window.document;
@@ -25,19 +26,20 @@ const initKeyboard = () => {
     }
   };
 
+  const typeChar = (char) => {
+    const { selectionStart, selectionEnd } = boundedInput;
+    const startText = boundedInput.value.substring(0, selectionStart);
+    const endText = boundedInput.value.substring(selectionEnd, boundedInput.value.length);
+
+    boundedInput.value = startText + char + endText;
+    boundedInput.selectionEnd = selectionStart + char.length;
+    boundedInput.selectionStart = selectionStart + char.length;
+  };
+
   const createKeyButton = (code) => {
     const codeIndex = keyboardMapping.keyCodes.indexOf(code);
     const key = keyboardMapping.en[codeIndex];
-
-    const typeChar = (char) => {
-      const { selectionStart, selectionEnd } = boundedInput;
-      const startText = boundedInput.value.substring(0, selectionStart);
-      const endText = boundedInput.value.substring(selectionEnd, boundedInput.value.length);
-
-      boundedInput.value = startText + char + endText;
-      boundedInput.selectionEnd = selectionStart + char.length;
-      boundedInput.selectionStart = selectionStart + char.length;
-    };
+    const char = code === KeyCodes.SPACE ? ' ' : key;
     const handleMouseUp = (event) => {
       cancelBlur(event);
       updateKeyboardStyles(false, code, Devices.MOUSE);
@@ -48,7 +50,7 @@ const initKeyboard = () => {
 
       cancelBlur(event);
       updateKeyboardStyles(true, code, Devices.MOUSE);
-      typeChar(key, boundedInput);
+      typeChar(char, boundedInput);
       document.addEventListener(EventNames.MOUSEUP, handleMouseUp);
     };
 
@@ -58,8 +60,13 @@ const initKeyboard = () => {
     return keyButton;
   };
 
+  const pickCreateFunction = (code) => {
+    return createKeyButton;
+  }
+
   keyboardMapping.keyCodes.reduce((map, code) => {
-    const button = createKeyButton(code);
+    const buttonCreateFunction = pickCreateFunction(code);
+    const button = buttonCreateFunction(code);
     const pressState = { mouse: false, keyboard: false };
     return map.set(code, { button, pressState });
   }, buttonMap);
