@@ -45,7 +45,8 @@ const initKeyboard = () => {
 
   const typeChar = (code) => {
     const codeIndex = keyboardMapping.keyCodes.indexOf(code);
-    let char = code === KeyCodes.SPACE ? ' ' : keyboardMapping[lang][codeIndex];
+    const chars = keyboardMapping[lang + (isUpperCased ? 'Shift' : '')];
+    let char = code === KeyCodes.SPACE ? ' ' : chars[codeIndex];
     if (isUpperCased) char = char.toUpperCase();
     const { selectionStart, selectionEnd } = boundedInput;
     const startText = boundedInput.value.substring(0, selectionStart);
