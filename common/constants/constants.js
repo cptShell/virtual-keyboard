@@ -4,6 +4,11 @@ export const ClassNames = {
   PRESSED: 'pressed',
 };
 
+export const Languages = {
+  EN: 'en',
+  RU: 'ru',
+}
+
 export const EventNames = {
   MOUSEUP: 'mouseup',
   MOUSEDOWN: 'mousedown',
