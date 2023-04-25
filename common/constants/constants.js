@@ -30,6 +30,8 @@ export const Devices = {
 };
 
 export const KeyCodes = {
+  BACKSPACE: 8,
+  DELETE: 46,
   SPACE: 32,
   SHIFT: 16,
   CAPS_LOCK: 20,
