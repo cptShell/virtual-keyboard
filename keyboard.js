@@ -43,25 +43,29 @@ const initKeyboard = () => {
     element.classList.toggle(ClassNames.PRESSED, force);
   };
 
-  const cropText = (selectionStart, selectionEnd) => {
+  const cropText = (selectionStart, selectionEnd, insertionStr = '') => {
     const inputText = boundedInput.value;
     const startText = inputText.substring(0, selectionStart);
     const endText = inputText.substring(selectionEnd, inputText.length);
 
-    boundedInput.value = startText + endText;
-    boundedInput.selectionEnd = selectionStart;
-    boundedInput.selectionStart = selectionStart;
-  }
+    boundedInput.value = startText + insertionStr + endText;
+    boundedInput.selectionEnd = selectionStart + insertionStr.length;
+    boundedInput.selectionStart = selectionStart + insertionStr.length;
+  };
   const removeChar = (forceShift) => {
     let { selectionStart, selectionEnd } = boundedInput;
     const startIndex = 0;
     const isRangedSelection = selectionStart !== selectionEnd;
     if (!isRangedSelection) {
-      forceShift ? selectionEnd++ : selectionStart = Math.max(--selectionStart, startIndex);
+      if (forceShift) {
+        selectionEnd += 1;
+      } else {
+        selectionStart = Math.max(selectionStart - 1, startIndex);
+      }
     }
-    
+
     cropText(selectionStart, selectionEnd);
-  }
+  };
   const typeChar = (code) => {
     const codeIndex = keyboardMapping.keyCodes.indexOf(code);
     const chars = keyboardMapping[lang + (isUpperCased ? 'Shift' : '')];
@@ -69,7 +73,7 @@ const initKeyboard = () => {
     if (isUpperCased) char = char.toUpperCase();
     const { selectionStart, selectionEnd } = boundedInput;
 
-    cropText(selectionStart, selectionEnd);
+    cropText(selectionStart, selectionEnd, char);
   };
   const setupMouseHandlers = (code, typeAction) => {
     const handleMouseUp = (event) => {
@@ -89,9 +93,9 @@ const initKeyboard = () => {
   };
   const createActionInvoker = (code) => {
     if (code === KeyCodes.BACKSPACE) return () => removeChar(false);
-    if (code === KeyCodes.DELETE) return () => removeChar(true); 
+    if (code === KeyCodes.DELETE) return () => removeChar(true);
     return () => typeChar(code, boundedInput);
-  }
+  };
   const createKeyButton = (code) => {
     const codeIndex = keyboardMapping.keyCodes.indexOf(code);
     const key = keyboardMapping[lang][codeIndex];
@@ -177,8 +181,7 @@ const initKeyboard = () => {
   document.addEventListener(EventNames.KEYDOWN, handleCapsLock);
   document.addEventListener(EventNames.KEYUP, handleKeyUp);
   document.addEventListener(EventNames.KEYUP, handleUnshift);
-  
-  console.log(buttonMap);
+
   const buttons = [...buttonMap.values()].map(({ button }) => button);
   keyboard.append(...buttons);
   body.append(keyboard);
