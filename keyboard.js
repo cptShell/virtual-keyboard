@@ -67,10 +67,13 @@ const initKeyboard = () => {
     cropText(selectionStart, selectionEnd);
   };
   const typeChar = (code) => {
-    const codeIndex = keyboardMapping.keyCodes.indexOf(code);
-    const chars = keyboardMapping[lang + (isUpperCased ? 'Shift' : '')];
-    let char = code === KeyCodes.SPACE ? ' ' : chars[codeIndex];
-    if (isUpperCased) char = char.toUpperCase();
+    const charIndex = keyboardMapping.keyCodes.indexOf(code);
+    const currentChars = keyboardMapping[lang + (isUpperCased ? 'Shift' : '')];
+    let char = currentChars[charIndex];
+    if (code === KeyCodes.SPACE) char = ' ';
+    if (code === KeyCodes.TAB) char = '\t';
+    if (code === KeyCodes.ENTER) char = '\n';
+
     const { selectionStart, selectionEnd } = boundedInput;
 
     cropText(selectionStart, selectionEnd, char);
@@ -106,6 +109,18 @@ const initKeyboard = () => {
 
     return keyButton;
   };
+  const updateKeys = (forceChangeLanguage) => {
+    isUpperCased = !isUpperCased;
+    if (forceChangeLanguage) lang = langList.getNext(lang);
+
+    [...buttonMap.entries()].forEach(([code, { button }]) => {
+      const updatedButton = button;
+      const codeIndex = keyboardMapping.keyCodes.indexOf(code);
+      const chars = keyboardMapping[lang + (isUpperCased ? 'Shift' : '')];
+      const newChar = chars[codeIndex];
+      updatedButton.textContent = newChar;
+    });
+  };
   const createCapsButton = (code) => {
     const codeIndex = keyboardMapping.keyCodes.indexOf(code);
     const key = keyboardMapping[lang][codeIndex];
@@ -119,19 +134,6 @@ const initKeyboard = () => {
 
     return capsButton;
   };
-  const updateKeys = (forceChangeLanguage) => {
-    isUpperCased = !isUpperCased;
-    if (forceChangeLanguage) lang = langList.getNext(lang);
-
-    [...buttonMap.entries()].forEach(([code, { button }]) => {
-      const updatedButton = button;
-      const codeIndex = keyboardMapping.keyCodes.indexOf(code);
-      const chars = keyboardMapping[lang + (isUpperCased ? 'Shift' : '')];
-      const newChar = chars[codeIndex];
-      updatedButton.textContent = newChar;
-    });
-  };
-
   const pickCreateFunction = (code) => {
     if (code === KeyCodes.CAPS_LOCK) return createCapsButton;
     return createKeyButton;
