@@ -18,6 +18,7 @@ export const SpecialKeySybols = {
 }
 
 export const EventNames = {
+  BEFOREUNLOAD: 'beforeunload',
   MOUSEUP: 'mouseup',
   MOUSEDOWN: 'mousedown',
   KEYUP: 'keyup',

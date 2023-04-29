@@ -16,15 +16,14 @@ import {
 } from './common/common';
 
 const { body } = window.document;
-const langList = new LangList([Languages.EN, Languages.RU]);
+const initLang = localStorage.getItem(STORAGE_KEY) || Languages.EN;
+const langList = new LangList([Languages.EN, Languages.RU], initLang);
 
 const initKeyboard = () => {
-  const arrowCodes = [KeyCodes.ARROW_DOWN, KeyCodes.ARROW_LEFT, KeyCodes.ARROW_RIGHT, KeyCodes.ARROW_UP];
   const altCodes = [KeyCodes.ALT_LEFT, KeyCodes.ALT_RIGHT];
   const shiftCodes = [KeyCodes.SHIFT_LEFT, KeyCodes.SHIFT_RIGHT];
   const removeChars = [KeyCodes.DELETE, KeyCodes.BACKSPACE];
 
-  let lang = localStorage.getItem(STORAGE_KEY) || Languages.EN;
   const shiftState = new TwoSidedKeyState(KeyCodes.SHIFT_LEFT, KeyCodes.SHIFT_RIGHT);
   const altState = new TwoSidedKeyState(KeyCodes.ALT_LEFT, KeyCodes.ALT_RIGHT);
   let isCapsed = false;
@@ -113,7 +112,6 @@ const initKeyboard = () => {
       }
       const onUpAction = () => {
         shiftState.toggle(code, Devices.MOUSE, false);
-        console.log(shiftState.isPressed);
         updateKeys();
       }
       return [onDownAction, onUpAction];
@@ -131,7 +129,7 @@ const initKeyboard = () => {
   };
   const createKeyButton = (code) => {
     const codeIndex = keyboardMapping.keyCodes.indexOf(code);
-    const key = keyboardMapping[lang][codeIndex];
+    const key = keyboardMapping[langList.current][codeIndex];
     const keyButton = createElement(TagNames.BUTTON, null, null, key);
     const [onDownAction, onUpAction] = createActionInvokers(code);
     const [handleMouseDown] = setupMouseHandlers(code, onDownAction, onUpAction);
@@ -154,7 +152,7 @@ const initKeyboard = () => {
   };
   const createCapsButton = (code) => {
     const codeIndex = keyboardMapping.keyCodes.indexOf(code);
-    const key = keyboardMapping[lang][codeIndex];
+    const key = keyboardMapping[langList.current][codeIndex];
     const capsButton = createElement(TagNames.BUTTON, null, null, key);
     const handlePushCapsLock = () => {
       isCapsed = !isCapsed;
@@ -235,6 +233,5 @@ const initKeyboard = () => {
   keyboard.append(...buttons);
   body.append(keyboard);
 };
-keyboardMapping.keyCodes.forEach((code, index) => console.log(code, keyboardMapping.classes[index]));
-console.log(keyboardMapping.classes.length, keyboardMapping.keyCodes.length);
+
 initKeyboard();
