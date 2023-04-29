@@ -61,7 +61,7 @@ h1 {
 }
 
 .keyboard {
-  width: 700px;
+  width: 100%;
   display: flex;
   flex-wrap: wrap;
   gap: 5px;

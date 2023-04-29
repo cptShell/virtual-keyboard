@@ -1,5 +1,7 @@
 export { default as keyboardMapping } from './keyboard-mapping';
 
+export const STORAGE_KEY = 'user-key-lang';
+
 export const ClassNames = {
   PRESSED: 'pressed',
 };
@@ -8,6 +10,12 @@ export const Languages = {
   EN: 'en',
   RU: 'ru',
 };
+
+export const SpecialKeySybols = {
+  SPACE: ' ',
+  TAB: '\t',
+  ENTER: '\n',
+}
 
 export const EventNames = {
   MOUSEUP: 'mouseup',
@@ -21,6 +29,7 @@ export const EventNames = {
 export const TagNames = {
   DIV: 'div',
   BUTTON: 'button',
+  TEXTAREA: 'textarea',
 };
 
 export const Devices = {
@@ -30,14 +39,22 @@ export const Devices = {
 };
 
 export const KeyCodes = {
-  BACKSPACE: 8,
-  DELETE: 46,
-  SPACE: 32,
-  SHIFT: 16,
-  CAPS_LOCK: 20,
-  TAB: 9,
-  ENTER: 13,
-  CTRL: 17,
-  WIN: 91,
-  ALT: 18,
-};
+  BACKSPACE: 'Backspace',
+  DELETE: 'Delete',
+  SPACE: 'Space',
+  SHIFT: 'Shift',
+  SHIFT_LEFT: 'ShiftLeft',
+  SHIFT_RIGHT: 'ShiftRight',
+  CAPS_LOCK: 'CapsLock',
+  TAB: 'Tab',
+  ENTER: 'Enter',
+  CTRL_LEFT: 'ControlLeft',
+  CTRL_RIGHT: 'ControlRight',
+  WIN: 'MetaLeft',
+  ALT_LEFT: 'AltLeft',
+  ALT_RIGHT: 'AltRight',
+  ARROW_RIGHT: 'ArrowRight',
+  ARROW_LEFT: 'ArrowLeft',
+  ARROW_UP: 'ArrowUp',
+  ARROW_DOWN: 'ArrowDown',
+}

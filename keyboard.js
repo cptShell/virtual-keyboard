@@ -9,21 +9,26 @@ import {
   Devices,
   KeyCodes,
   Languages,
+  TwoSidedKeyState,
+  LangList,
+  SpecialKeySybols,
+  STORAGE_KEY
 } from './common/common';
 
 const { body } = window.document;
-const langList = Object.values(Languages);
-langList.getNext = (currentLang) => {
-  const currentIndex = langList.indexOf(currentLang);
-  const nextIndex = (currentIndex + 1) % langList.length;
-  return langList[nextIndex] || currentLang;
-};
+const langList = new LangList([Languages.EN, Languages.RU]);
 
 const initKeyboard = () => {
-  let lang = localStorage.getItem('user-key-lang') || Languages.EN;
-  let isUpperCased = false;
+  const arrowCodes = [KeyCodes.ARROW_DOWN, KeyCodes.ARROW_LEFT, KeyCodes.ARROW_RIGHT, KeyCodes.ARROW_UP];
+  const altCodes = [KeyCodes.ALT_LEFT, KeyCodes.ALT_RIGHT];
+  const shiftCodes = [KeyCodes.SHIFT_LEFT, KeyCodes.SHIFT_RIGHT];
+  const removeChars = [KeyCodes.DELETE, KeyCodes.BACKSPACE];
+
+  let lang = localStorage.getItem(STORAGE_KEY) || Languages.EN;
+  const shiftState = new TwoSidedKeyState(KeyCodes.SHIFT_LEFT, KeyCodes.SHIFT_RIGHT);
+  const altState = new TwoSidedKeyState(KeyCodes.ALT_LEFT, KeyCodes.ALT_RIGHT);
   let isCapsed = false;
-  const boundedInput = document.querySelector('textarea');
+  const boundedInput = document.querySelector(TagNames.TEXTAREA);
   const buttonMap = new Map();
 
   const toggleKeyboardStyles = (force, code, stateName) => {
@@ -68,20 +73,23 @@ const initKeyboard = () => {
   };
   const typeChar = (code) => {
     const charIndex = keyboardMapping.keyCodes.indexOf(code);
-    const currentChars = keyboardMapping[lang + (isUpperCased ? 'Shift' : '')];
+    const isUpperCased = isCapsed ? !shiftState.isPressed : shiftState.isPressed;
+    const keyboardMappingProperty = langList.current + (isUpperCased ? 'Shift' : '');
+    const currentChars = keyboardMapping[keyboardMappingProperty];
     let char = currentChars[charIndex];
-    if (code === KeyCodes.SPACE) char = ' ';
-    if (code === KeyCodes.TAB) char = '\t';
-    if (code === KeyCodes.ENTER) char = '\n';
+    if (code === KeyCodes.SPACE) char = SpecialKeySybols.SPACE;
+    if (code === KeyCodes.TAB) char = SpecialKeySybols.TAB;
+    if (code === KeyCodes.ENTER) char = SpecialKeySybols.ENTER;
 
     const { selectionStart, selectionEnd } = boundedInput;
 
     cropText(selectionStart, selectionEnd, char);
   };
-  const setupMouseHandlers = (code, typeAction) => {
+  const setupMouseHandlers = (code, typeAction, onUpAction) => {
     const handleMouseUp = (event) => {
       cancelBlur(event);
       toggleKeyboardStyles(false, code, Devices.MOUSE);
+      if (onUpAction) onUpAction();
       document.removeEventListener(EventNames.MOUSEUP, handleMouseUp);
     };
     const handleMouseDown = (event) => {
@@ -94,29 +102,52 @@ const initKeyboard = () => {
     };
     return [handleMouseDown, handleMouseUp];
   };
-  const createActionInvoker = (code) => {
-    if (code === KeyCodes.BACKSPACE) return () => removeChar(false);
-    if (code === KeyCodes.DELETE) return () => removeChar(true);
-    return () => typeChar(code, boundedInput);
+  const createActionInvokers = (code) => {
+    if (code === KeyCodes.BACKSPACE) return [() => removeChar(false)];
+    if (code === KeyCodes.DELETE) return [() => removeChar(true)];
+    if (shiftCodes.some(value => value === code)) {
+      const onDownAction = () => {
+        if (!shiftState.isPressed && altState.isPressed) langList.getNext();
+        shiftState.toggle(code, Devices.MOUSE, true);
+        updateKeys();
+      }
+      const onUpAction = () => {
+        shiftState.toggle(code, Devices.MOUSE, false);
+        console.log(shiftState.isPressed);
+        updateKeys();
+      }
+      return [onDownAction, onUpAction];
+    }
+    if (altCodes.some(value => value === code)) {
+      const onDownAction = () => {
+        if (shiftState.isPressed && !altState.isPressed) langList.getNext();
+        altState.toggle(code, KeyCodes.MOUSE, true);
+        updateKeys();
+      }
+      const onUpAction = () => altState.toggle(code, KeyCodes.MOUSE, false);
+      return [onDownAction, onUpAction];
+    };
+    return [() => typeChar(code)];
   };
   const createKeyButton = (code) => {
     const codeIndex = keyboardMapping.keyCodes.indexOf(code);
     const key = keyboardMapping[lang][codeIndex];
     const keyButton = createElement(TagNames.BUTTON, null, null, key);
-    const invokeAction = createActionInvoker(code);
-    const [handleMouseDown] = setupMouseHandlers(code, invokeAction);
+    const [onDownAction, onUpAction] = createActionInvokers(code);
+    const [handleMouseDown] = setupMouseHandlers(code, onDownAction, onUpAction);
     keyButton.addEventListener(EventNames.MOUSEDOWN, handleMouseDown);
 
     return keyButton;
   };
-  const updateKeys = (forceChangeLanguage) => {
-    isUpperCased = !isUpperCased;
-    if (forceChangeLanguage) lang = langList.getNext(lang);
+  const updateKeys = () => {
+    const isUpperCased = isCapsed ? !shiftState.isPressed : shiftState.isPressed;
+    let keyboardMappingProperty = langList.current;
+    if (isUpperCased) keyboardMappingProperty += KeyCodes.SHIFT;
+    const chars = keyboardMapping[keyboardMappingProperty];
 
     [...buttonMap.entries()].forEach(([code, { button }]) => {
       const updatedButton = button;
       const codeIndex = keyboardMapping.keyCodes.indexOf(code);
-      const chars = keyboardMapping[lang + (isUpperCased ? 'Shift' : '')];
       const newChar = chars[codeIndex];
       updatedButton.textContent = newChar;
     });
@@ -127,7 +158,7 @@ const initKeyboard = () => {
     const capsButton = createElement(TagNames.BUTTON, null, null, key);
     const handlePushCapsLock = () => {
       isCapsed = !isCapsed;
-      updateKeys(false);
+      updateKeys();
       setKeyboardStyles(isCapsed, code);
     };
     capsButton.addEventListener(EventNames.CLICK, handlePushCapsLock);
@@ -149,44 +180,61 @@ const initKeyboard = () => {
   const keyboard = createElement(TagNames.DIV, Devices.KEYBOARD);
   keyboard.addEventListener(EventNames.MOUSEDOWN, cancelBlur);
 
-  const createHandleKey = (force) => ({ which: code }) => {
+  const createHandleKey = (force) => (event) => {
+    event.preventDefault();
+
     if (!boundedInput || document.activeElement !== boundedInput) return;
+
+    const { altKey, shiftKey, code, repeat } = event;    
+
     if (!buttonMap.has(code)) return;
-    if (code !== KeyCodes.CAPS_LOCK) {
+    if (KeyCodes.TAB === code && force) return typeChar(code);
+    if (altCodes.some(alt => alt === code)) {
+      if (repeat) return;
+      
+      altState.toggle(code, Devices.KEYBOARD, force);
       toggleKeyboardStyles(force, code, Devices.KEYBOARD);
+      if (shiftState.isPressed && force) {
+        langList.getNext();
+        updateKeys();
+      };
+      return;
     }
+    if (shiftCodes.some(shift => shift === code)) {
+      if (repeat) return;
+
+      if (altState.isPressed) langList.getNext();
+      shiftCodes.forEach(shift => toggleKeyboardStyles(force, shift, Devices.KEYBOARD));
+      shiftState.toggle(code, Devices.KEYBOARD, force);
+      updateKeys();
+      return;
+    }
+    if (code === KeyCodes.CAPS_LOCK) {
+      if (repeat || !force) return;
+
+      isCapsed = !isCapsed;
+      updateKeys();
+      setKeyboardStyles(isCapsed, code);
+      return;
+    }
+    if (removeChars.some(value => value === code)) {
+      if (force) removeChar(code === KeyCodes.DELETE);
+      setKeyboardStyles(isCapsed, code);
+      return;
+    }
+    if (force) typeChar(code);
+
+    toggleKeyboardStyles(force, code, Devices.KEYBOARD);
   };
   const handleKeyUp = createHandleKey(false);
   const handleKeyDown = createHandleKey(true);
-  const handleUnshift = ({ which: code }) => {
-    if (!boundedInput || document.activeElement !== boundedInput) return;
-    if (code === KeyCodes.SHIFT) updateKeys(false);
-  };
-  const handleShift = ({
-    altKey, shiftKey, which: code, repeat,
-  }) => {
-    if (!boundedInput || document.activeElement !== boundedInput) return;
-    if (repeat) return;
-    if (code === KeyCodes.SHIFT) updateKeys(altKey && shiftKey);
-  };
-  const handleCapsLock = ({ which: code, repeat }) => {
-    if (!boundedInput || document.activeElement !== boundedInput) return;
-    if (repeat) return;
-    if (code === KeyCodes.CAPS_LOCK) {
-      isCapsed = !isCapsed;
-      updateKeys(false);
-      setKeyboardStyles(isCapsed, code);
-    }
-  };
   document.addEventListener(EventNames.KEYDOWN, handleKeyDown);
-  document.addEventListener(EventNames.KEYDOWN, handleShift);
-  document.addEventListener(EventNames.KEYDOWN, handleCapsLock);
   document.addEventListener(EventNames.KEYUP, handleKeyUp);
-  document.addEventListener(EventNames.KEYUP, handleUnshift);
 
   const buttons = [...buttonMap.values()].map(({ button }) => button);
   keyboard.append(...buttons);
   body.append(keyboard);
 };
-
+keyboardMapping.keyCodes.forEach((code, index) => console.log(code, keyboardMapping.classes[index]));
+console.log(keyboardMapping.classes.length, keyboardMapping.keyCodes.length);
 initKeyboard();
