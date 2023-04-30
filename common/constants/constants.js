@@ -34,7 +34,8 @@ export const TagNames = {
   BUTTON: 'BUTTON',
   TEXTAREA: 'TEXTAREA',
   INPUT: 'INPUT',
-  H2: 'H2',
+  H1: 'H1',
+  SPAN: 'SPAN',
 };
 
 export const Devices = {
