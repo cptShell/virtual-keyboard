@@ -42,6 +42,7 @@ export default () => {
   };
   const setKeyboardStyles = (force, code) => {
     const button = buttonMap.get(code);
+    console.log(button, force);
     const { button: element } = button;
 
     element.classList.toggle(ClassNames.PRESSED, force);
@@ -187,8 +188,8 @@ export default () => {
     if (!boundedInput || document.activeElement !== boundedInput) return;
 
     const { code, repeat } = event;    
-
     if (!buttonMap.has(code)) return;
+ 
     if (KeyCodes.TAB === code && force) return typeChar(code);
     if (altCodes.some(alt => alt === code)) {
       if (repeat) return;
@@ -220,11 +221,11 @@ export default () => {
     }
     if (removeChars.some(value => value === code)) {
       if (force) removeChar(code === KeyCodes.DELETE);
-      setKeyboardStyles(isCapsed, code);
+      console.log(code);
+      setKeyboardStyles(force, code);
       return;
     }
     if (force) typeChar(code);
-
     toggleKeyboardStyles(force, code, Devices.KEYBOARD);
   };
   const handleRefreshFocus = (event) => {
