@@ -207,7 +207,7 @@ export default () => {
     if (shiftCodes.some((shift) => shift === code)) {
       if (repeat) return;
 
-      if (altState.isPressed) langList.getNext();
+      if (altState.isPressed && force) langList.getNext();
       shiftCodes.forEach((shift) => toggleKeyboardStyles(force, shift, Devices.KEYBOARD));
       shiftState.toggle(code, Devices.KEYBOARD, force);
       updateKeys();
