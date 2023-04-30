@@ -18,16 +18,16 @@ import {
 const { body } = window.document;
 const initLang = localStorage.getItem(STORAGE_KEY) || Languages.EN;
 const langList = new LangList([Languages.EN, Languages.RU], initLang);
+const altCodes = [KeyCodes.ALT_LEFT, KeyCodes.ALT_RIGHT];
+const shiftCodes = [KeyCodes.SHIFT_LEFT, KeyCodes.SHIFT_RIGHT];
+const removeChars = [KeyCodes.DELETE, KeyCodes.BACKSPACE];
+const controlKeys = [KeyCodes.CTRL_LEFT, KeyCodes.CTRL_RIGHT, KeyCodes.WIN];
 
-const initKeyboard = () => {
-  const altCodes = [KeyCodes.ALT_LEFT, KeyCodes.ALT_RIGHT];
-  const shiftCodes = [KeyCodes.SHIFT_LEFT, KeyCodes.SHIFT_RIGHT];
-  const removeChars = [KeyCodes.DELETE, KeyCodes.BACKSPACE];
-
-  const shiftState = new TwoSidedKeyState(KeyCodes.SHIFT_LEFT, KeyCodes.SHIFT_RIGHT);
-  const altState = new TwoSidedKeyState(KeyCodes.ALT_LEFT, KeyCodes.ALT_RIGHT);
+export default () => {
+  const shiftState = new TwoSidedKeyState(...shiftCodes);
+  const altState = new TwoSidedKeyState(...altCodes);
   let isCapsed = false;
-  const boundedInput = document.querySelector(TagNames.TEXTAREA);
+  let boundedInput = document.querySelector(TagNames.TEXTAREA);
   const buttonMap = new Map();
 
   const toggleKeyboardStyles = (force, code, stateName) => {
@@ -73,12 +73,14 @@ const initKeyboard = () => {
   const typeChar = (code) => {
     const charIndex = keyboardMapping.keyCodes.indexOf(code);
     const isUpperCased = isCapsed ? !shiftState.isPressed : shiftState.isPressed;
-    const keyboardMappingProperty = langList.current + (isUpperCased ? 'Shift' : '');
-    const currentChars = keyboardMapping[keyboardMappingProperty];
-    let char = currentChars[charIndex];
+    let keyboardMappingProperty = langList.current;
+    if (isUpperCased) keyboardMappingProperty += KeyCodes.SHIFT;
+    const chars = keyboardMapping[keyboardMappingProperty];
+    let char = chars[charIndex];
     if (code === KeyCodes.SPACE) char = SpecialKeySybols.SPACE;
     if (code === KeyCodes.TAB) char = SpecialKeySybols.TAB;
     if (code === KeyCodes.ENTER) char = SpecialKeySybols.ENTER;
+    if (controlKeys.some(value => value === code)) char = ''
 
     const { selectionStart, selectionEnd } = boundedInput;
 
@@ -93,8 +95,8 @@ const initKeyboard = () => {
     };
     const handleMouseDown = (event) => {
       if (!boundedInput || document.activeElement !== boundedInput) return;
-
       cancelBlur(event);
+
       toggleKeyboardStyles(true, code, Devices.MOUSE);
       typeAction();
       document.addEventListener(EventNames.MOUSEUP, handleMouseUp);
@@ -168,9 +170,10 @@ const initKeyboard = () => {
     return createKeyButton;
   };
 
-  keyboardMapping.keyCodes.reduce((map, code) => {
+  keyboardMapping.keyCodes.reduce((map, code, index) => {
     const buttonCreateFunction = pickCreateFunction(code);
     const button = buttonCreateFunction(code);
+    button.classList.add(keyboardMapping.classes[index]);
     const pressState = { mouse: false, keyboard: false };
     return map.set(code, { button, pressState });
   }, buttonMap);
@@ -183,7 +186,7 @@ const initKeyboard = () => {
 
     if (!boundedInput || document.activeElement !== boundedInput) return;
 
-    const { altKey, shiftKey, code, repeat } = event;    
+    const { code, repeat } = event;    
 
     if (!buttonMap.has(code)) return;
     if (KeyCodes.TAB === code && force) return typeChar(code);
@@ -224,14 +227,16 @@ const initKeyboard = () => {
 
     toggleKeyboardStyles(force, code, Devices.KEYBOARD);
   };
+  const handleRefreshFocus = (event) => {
+    if (event.target === body) event.preventDefault();
+  }
   const handleKeyUp = createHandleKey(false);
   const handleKeyDown = createHandleKey(true);
   document.addEventListener(EventNames.KEYDOWN, handleKeyDown);
   document.addEventListener(EventNames.KEYUP, handleKeyUp);
+  document.addEventListener(EventNames.MOUSEDOWN, handleRefreshFocus);
 
   const buttons = [...buttonMap.values()].map(({ button }) => button);
   keyboard.append(...buttons);
   body.append(keyboard);
 };
-
-initKeyboard();

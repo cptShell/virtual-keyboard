@@ -4,6 +4,8 @@ export const STORAGE_KEY = 'user-key-lang';
 
 export const ClassNames = {
   PRESSED: 'pressed',
+  KEYBAORD_WRAPPER: 'keyboard-wrapper',
+  KEYBOARD_OPEN: 'open',
 };
 
 export const Languages = {
@@ -28,9 +30,10 @@ export const EventNames = {
 };
 
 export const TagNames = {
-  DIV: 'div',
-  BUTTON: 'button',
-  TEXTAREA: 'textarea',
+  DIV: 'DIV',
+  BUTTON: 'BUTTON',
+  TEXTAREA: 'TEXTAREA',
+  INPUT: 'INPUT',
 };
 
 export const Devices = {
