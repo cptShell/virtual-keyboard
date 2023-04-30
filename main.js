@@ -1,5 +1,5 @@
-import { TagNames, createElement } from "./common/common";
-import initKeyboard from "./keyboard";
+import { TagNames, createElement } from './common/common';
+import initKeyboard from './keyboard';
 
 const textPolygon = createElement(TagNames.TEXTAREA);
 const title = createElement(TagNames.H1);

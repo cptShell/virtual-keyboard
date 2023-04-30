@@ -17,7 +17,7 @@ export const SpecialKeySybols = {
   SPACE: ' ',
   TAB: '\t',
   ENTER: '\n',
-}
+};
 
 export const EventNames = {
   BEFOREUNLOAD: 'beforeunload',
@@ -63,4 +63,4 @@ export const KeyCodes = {
   ARROW_LEFT: 'ArrowLeft',
   ARROW_UP: 'ArrowUp',
   ARROW_DOWN: 'ArrowDown',
-}
+};
