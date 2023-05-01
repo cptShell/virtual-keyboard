@@ -22,6 +22,7 @@ const altCodes = [KeyCodes.ALT_LEFT, KeyCodes.ALT_RIGHT];
 const shiftCodes = [KeyCodes.SHIFT_LEFT, KeyCodes.SHIFT_RIGHT];
 const removeChars = [KeyCodes.DELETE, KeyCodes.BACKSPACE];
 const controlKeys = [KeyCodes.CTRL_LEFT, KeyCodes.CTRL_RIGHT, KeyCodes.WIN];
+const exceptions = [KeyCodes.WIN, KeyCodes.CTRL_LEFT, KeyCodes.CTRL_RIGHT];
 
 export default () => {
   const shiftState = new TwoSidedKeyState(...shiftCodes);
@@ -134,13 +135,17 @@ export default () => {
     if (altCodes.some((value) => value === code)) {
       const onDownAction = () => {
         if (shiftState.isPressed && !altState.isPressed) langList.getNext();
-        altState.toggle(code, KeyCodes.MOUSE, true);
+        altState.toggle(code, Devices.MOUSE, true);
+
         updateKeys();
       };
-      const onUpAction = () => altState.toggle(code, KeyCodes.MOUSE, false);
+      const onUpAction = () => altState.toggle(code, Devices.MOUSE, false);
       return [onDownAction, onUpAction];
     }
-    return [() => typeChar(code)];
+    const onDownAction = () => {
+      if (!exceptions.some(value => value === code)) typeChar(code);
+    }
+    return [onDownAction];
   };
   const createKeyButton = (code) => {
     const codeIndex = keyboardMapping.keyCodes.indexOf(code);
@@ -190,6 +195,7 @@ export default () => {
     if (!buttonMap.has(code)) return;
 
     if (KeyCodes.TAB === code && force) {
+      toggleKeyboardStyles(force, code, Devices.KEYBOARD);
       typeChar(code);
       return;
     }
@@ -206,7 +212,7 @@ export default () => {
     }
     if (shiftCodes.some((shift) => shift === code)) {
       if (repeat) return;
-
+      console.log(altState.isPressed);
       if (altState.isPressed && force) langList.getNext();
       shiftCodes.forEach((shift) => toggleKeyboardStyles(force, shift, Devices.KEYBOARD));
       shiftState.toggle(code, Devices.KEYBOARD, force);
@@ -226,7 +232,7 @@ export default () => {
       setKeyboardStyles(force, code);
       return;
     }
-    if (force) typeChar(code);
+    if (force && !exceptions.some(value => value === code)) typeChar(code);
     toggleKeyboardStyles(force, code, Devices.KEYBOARD);
   };
   const handleRefreshFocus = (event) => {
