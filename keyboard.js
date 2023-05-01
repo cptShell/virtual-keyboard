@@ -143,8 +143,8 @@ export default () => {
       return [onDownAction, onUpAction];
     }
     const onDownAction = () => {
-      if (!exceptions.some(value => value === code)) typeChar(code);
-    }
+      if (!exceptions.some((value) => value === code)) typeChar(code);
+    };
     return [onDownAction];
   };
   const createKeyButton = (code) => {
@@ -212,7 +212,6 @@ export default () => {
     }
     if (shiftCodes.some((shift) => shift === code)) {
       if (repeat) return;
-      console.log(altState.isPressed);
       if (altState.isPressed && force) langList.getNext();
       shiftCodes.forEach((shift) => toggleKeyboardStyles(force, shift, Devices.KEYBOARD));
       shiftState.toggle(code, Devices.KEYBOARD, force);
@@ -232,7 +231,7 @@ export default () => {
       setKeyboardStyles(force, code);
       return;
     }
-    if (force && !exceptions.some(value => value === code)) typeChar(code);
+    if (force && !exceptions.some((value) => value === code)) typeChar(code);
     toggleKeyboardStyles(force, code, Devices.KEYBOARD);
   };
   const handleRefreshFocus = (event) => {
